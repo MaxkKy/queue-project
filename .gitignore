@@ -77,3 +77,4 @@ temp/
 # agent folders
 .claude/
 .agents/
+.windsurf/
