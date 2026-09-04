@@ -1,0 +1,79 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist
+
+# prisma generated client
+/generated/prisma
+/generated
+
+# env (keep example files)
+.env
+.env.*
+!.env.example
+!.env*.example
+
+# debug / logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
+
+# docker local overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# certificates / keys
+*.pem
+*.key
+*.crt
+
+# os
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# editor / ide
+.idea/
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# misc
+*.local
+.turbo
+.cache
+tmp/
+temp/
+
+# agent folders
+.claude/
+.agents/
