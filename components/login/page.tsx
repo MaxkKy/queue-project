@@ -23,7 +23,7 @@ export default function Login() {
       });
       router.push(`/`);
     } catch (err) {
-      handleError(err)
+      handleError(err);
     } finally {
       setsaving(false);
     }
@@ -45,8 +45,8 @@ export default function Login() {
         />
         <button disabled={saving}>{saving ? "WAITING" : "Login"}</button>
         {error && <div style={{ color: "crimson", marginTop: 8 }}>{error}</div>}
-        <Link href={`/register`}>สมัครสมาชิก</Link>
       </form>
+      <Link href={`/register`}>สมัครสมาชิก</Link>
     </div>
   );
 }

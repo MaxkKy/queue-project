@@ -5,15 +5,15 @@ export async function GET({ params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const useId = Number(id);
-    if (Number.isInteger(useId) || useId <= 0) {
+    if (!Number.isInteger(useId) || useId <= 0) {
       return NextResponse.json(
         {
-          message: "Invalid not ID",
+          message: "Invalid post ID",
           code: "BAD_REQUEST",
           statusCode: 400,
           details: {
             id: [
-              "Invalid request parameters. User ID must be a positive integer.",
+              "Post ID must be a positive integer.",
             ],
           },
         },
@@ -44,17 +44,30 @@ export async function PUT(
   try {
     const { id } = await params;
     const useId = Number(id);
-    const body = await request.json();
     if (!Number.isInteger(useId) || useId <= 0) {
       return NextResponse.json(
         {
-          message: "Invalid not ID",
+          message: "Invalid post ID",
           code: "BAD_REQUEST",
           statusCode: 400,
           details: {
             id: [
-              "Invalid request parameters. User ID must be a positive integer.",
+              "Post ID must be a positive integer.",
             ],
+          },
+        },
+        { status: 400 },
+      );
+    }
+    const body = await request.json();
+    if (body.status !== "WAITING" && body.status !== "COMPLETE") {
+      return NextResponse.json(
+        {
+          message: "Invalid post status",
+          code: "BAD_REQUEST",
+          statusCode: 400,
+          details: {
+            status: ["Status must be WAITING or COMPLETE."],
           },
         },
         { status: 400 },
@@ -69,41 +82,11 @@ export async function PUT(
         { status: 404 },
       );
     }
-    if (body.status === "WAITING" || body.status === "COMPLETE") {
-      if (!findPost.queueId) {
-        const queue = await prisma.queue.create({
-          data: { status: body.status },
-        });
-        await prisma.post.update({
-          where: { id: useId },
-          data: { queueId: queue.id },
-        });
-        return NextResponse.json({ queue });
-      }
-      const shared = await prisma.post.count({
-        where: { queueId: findPost.queueId },
-      });
-      if (shared > 1) {
-        const queue = await prisma.queue.create({
-          data: { status: body.status },
-        });
-        await prisma.post.update({
-          where: { id: useId },
-          data: { queueId: queue.id },
-        });
-        return NextResponse.json({ queue });
-      }
-      const queue = await prisma.queue.update({
-        where: { id: findPost.queueId },
-        data: { status: body.status },
-      });
-      return NextResponse.json({ queue });
-    }
-    await prisma.post.update({
+    const updatedPost = await prisma.post.update({
       where: { id: useId },
-      data: { name: body.name, queueId: body.queueId },
+      data: { status: body.status },
     });
-    return NextResponse.json({ message: "Update Success" });
+    return NextResponse.json({ message: "Update Success", updatedPost });
   } catch {
     return NextResponse.json(
       { message: "Server not Found", code: "SERVER_ERROR", statusCode: 500 },
@@ -112,13 +95,20 @@ export async function PUT(
   }
 }
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const id = await params;
+    const { id } = await params;
+    const useId = Number(id);
+    if (!Number.isInteger(useId) || useId <= 0) {
+      return NextResponse.json(
+        { message: "Invalid post ID", code: "BAD_REQUEST", statusCode: 400 },
+        { status: 400 },
+      );
+    }
     const findPost = await prisma.post.findUnique({
-      where: { id: Number(id) },
+      where: { id: useId },
     });
     if (!findPost) {
       return NextResponse.json(
@@ -127,8 +117,9 @@ export async function DELETE(
       );
     }
     await prisma.post.delete({
-      where: { id: Number(id) },
+      where: { id: useId },
     });
+    return NextResponse.json({ message: "Delete Success" });
   } catch {
     return NextResponse.json(
       { message: "Server not Found", code: "SERVER_ERROR", statusCode: 500 },

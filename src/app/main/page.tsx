@@ -2,27 +2,28 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../../services/api/apiClient";
 import { useApiError } from "../../../hooks/useApiError";
-import { useRouter } from "next/navigation";
-import { AppError } from "../../../lib/errors/AppError";
+import { useParams } from "next/navigation";
 
-type useTypeUser = {
-  username: string;
-};
 type useTypePost = {
   id: number;
-  name: string;
   details: string;
   createdAt: Date;
-  queue: { status: string } | null;
-  userId: number;
+  status: string;
+  item: {
+    quantity: number;
+    menu: {
+      id: number;
+      name: string;
+      price: number;
+    };
+  }[];
 };
 
 export default function page() {
   const [post, setPost] = useState<useTypePost[]>([]);
   const [loading, setloading] = useState(true);
-  const [user, setUser] = useState<useTypeUser | null>(null);
-  const router = useRouter();
   const { handleError } = useApiError();
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => {
     async function loadPost() {
       try {
@@ -40,7 +41,20 @@ export default function page() {
     }
     loadPost();
   }, []);
-
+  async function onDelete(postId:number){
+  if(!confirm("Delete this Post? This cannot be undone."))return;
+  setDeleting(true);
+  try{
+    await apiClient.delete(`/post/${postId}`)
+    setPost(post.filter(p => p.id !== postId));
+  }
+  catch(err){
+    handleError(err)
+  }
+  finally{
+    setDeleting(false)
+  }
+  }
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -54,10 +68,18 @@ export default function page() {
       <ul>
         {post.map((item) => (
           <li key={item.id}>
-            <h1>Food/Drink : {item.name}</h1>
+            {item.item.map((e) => (
+              <div key={e.menu.id}>
+                <h1>Food/Drink :{e.menu.name}</h1>
+                <h1>ราคา : {e.menu.price}</h1>
+                <h1>จำนวน : {e.quantity}</h1>
+              </div>
+            ))}
             {item.details ? <p>รายละเอียดเพิ่มเติม : {item.details}</p> : ""}
             <p>สร้าง : {new Date(item.createdAt).toLocaleDateString()}</p>
-            {item.queue?.status}
+            {item.status}
+            <button onClick={()=>onDelete(item.id)}>Delete</button>
+            <p>//////////////////////////////////////////////////////////</p>
           </li>
         ))}
       </ul>

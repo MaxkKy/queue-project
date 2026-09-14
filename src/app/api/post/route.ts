@@ -24,12 +24,11 @@ export async function GET(request: NextRequest) {
       );
     }
     const findPosts = await prisma.post.findMany({
-      where: { userId: user[0].id },
+      where: { userId: user[0].id },  
       include: {
-        queue: true,
+        item:{select:{quantity:true,menu:{select:{id:true,name:true,price:true}}}}
       },
-    });
-
+    }); 
     return NextResponse.json(findPosts);
   } catch {
     return NextResponse.json(
@@ -64,10 +63,10 @@ export async function POST(request: NextRequest) {
     //     { status: 401 },
     //   );
     // }
-    const user = await prisma.user.findMany({
+    const user = await prisma.user.findUnique({
       where: { gmail: checkToken.gmail },
     });
-    if (!user[0]) {
+    if (!user) {
       return NextResponse.json(
         { message: "user not found", code: "NOT_FOUND", statusCode: 404 },
         { status: 404 },
@@ -79,24 +78,36 @@ export async function POST(request: NextRequest) {
     // if (!queue) {
     //   queue = await prisma.queue.create({ data: { status: "WAITING" } });
     // }
+    if(!Array.isArray(body.item) || body.item.length === 0){
+      return NextResponse.json({message:"สั่งอย่างน้อย 1 รายการ",statusCode:400},{status:400})
+    }
+    const menuItem = []
+    for(const i of body.item){
+     menuItem.push({menuId:Number(i.menuId),
+      quantity:Number(i.quantity ?? 1) })
+    }
     const createPost = await prisma.post.create({
       data: {
-        name: body.name,
         details: body.details,
-        user: { connect: { id: user[0].id } },
-        queue: {
-          // connect: {
-          //   id: queue.id,
-          // },
-          create: { status: "WAITING" },
-        },
-      },
+        user: { connect: { id: user.id } },
+        // queue: {
+        //   // connect: {
+        //   //   id: queue.id,
+        //   // },
+        //   create: { status: "WAITING" },
+        // },
+        status:"WAITING",
+        item:{
+          create:menuItem
+        }
+      },include:{item:{include:{menu:true}}}
     });
     return NextResponse.json(
       { message: "Post Success", createPost },
       { status: 201 },
     );
-  } catch {
+  } catch(err) {
+    console.log(err)
     return NextResponse.json(
       { message: "Server not Found", code: "SERVER_ERROR", statusCode: 500 },
       { status: 500 },

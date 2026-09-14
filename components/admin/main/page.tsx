@@ -9,21 +9,24 @@ type useTypeUser = {
   gmail: string;
   post: {
     id: number;
-    name: string;
-    details: string;
+    details: string | null;
     createdAt: string;
-    queue: {
-      id: number;
-      status: string;
-      updateAt: string;
-    } | null;
+    status: "WAITING" | "COMPLETE";
+    item: {
+      quantity: number;
+      menu: {
+        id: number;
+        name: string;
+        price: number;
+      };
+    }[];
     }[];
   };
 
 export default function Admin() {
   const [users, setUsers] = useState<useTypeUser[]>([]);
   const [loading, setloading] = useState(true);
-  const [saving, setsaving] = useState(false);
+  const [savingPostId, setSavingPostId] = useState<number | null>(null);
   const [status, setStatus] = useState<{ [postId: number]: string }>({});
   const { handleError } = useApiError();
 
@@ -44,28 +47,25 @@ export default function Admin() {
     }
     fetchUser();
   }, []);
-  // postId: number มันรับ id จากตอนยิง button put เช่น ตอนนี้เราต้องการ Update post 5 put จะรับ id:5 ส่งไปให้ postId 
-  // currentStatus: string รับ status ที่มากับ p.queue!.status ใช่ไหม
-  async function updateQueue(postId: number, currentStatus: string) {
-    setsaving(true);
+  async function updateStatus(postId: number, currentStatus: "WAITING" | "COMPLETE") {
+    setSavingPostId(postId);
     try {
       const res = await apiClient.put(`/post/${postId}`, {
         status: status[postId] ?? currentStatus,
       });
-      if (res.data.queue) {
-        setUsers((prev) =>
-          prev.map((u) => ({
-            ...u,
-            post: u.post.map((post) =>
-              post.id !== postId ? post : { ...post, queue: res.data.queue },
-            ),
-          })),
-        );
-      }
+      const updatedPost = res.data.updatedPost;
+      setUsers((prev) =>
+        prev.map((u) => ({
+          ...u,
+          post: u.post.map((post) =>
+            post.id !== postId ? post : { ...post, status: updatedPost.status },
+          ),
+        })),
+      );
     } catch (err) {
       handleError(err);
     } finally {
-      setsaving(false);
+      setSavingPostId(null);
     }
   }
 
@@ -89,32 +89,35 @@ export default function Admin() {
           </h1>
           {item.post.map((p) => (
             <div key={p.id}>
-              <h1>อาหาร/เครื่องดื่ม : {p.name}</h1>
+              {p.item.map((e)=>(
+                <div>
+                  <h1>อาหาร/เครื่องดื่ม : {e.menu.name}</h1>
+                  <h1>ราคา : {e.menu.price}</h1>
+                  <h1>จำนวน : {e.quantity}</h1>
+                </div>
+              ))}
               <h2>รายละเอียดเพิ่มเติม : {p.details}</h2>
               <h1>สั่งวันที่ : {new Date(p.createdAt).toLocaleDateString()}</h1>
-              {p.queue && (
-                <>
-                  <select
-                    name="status"
-                    value={status[p.id] ?? p.queue.status}
-                    onChange={(e) =>
-                      setStatus({ ...status, [p.id]: e.target.value })
-                    }
-                  >
-                    <option value="WAITING">WAITING</option>
-                    <option value="COMPLETE">COMPLETE</option>
-                  </select>
-                  <button
-                    disabled={saving}
-                    onClick={() =>
-                      updateQueue(p.id, p.queue!.status)
-                    }
-                  >
-                    {saving ? "Saving" : "Save"}
-                  </button>
-                  <h1>Update Status : {new Date(p.queue.updateAt).toLocaleDateString()}</h1>
-                </>
-              )}
+              <select
+                name="status"
+                value={status[p.id] ?? p.status}
+                onChange={(e) =>
+                  setStatus({
+                    ...status,
+                    [p.id]: e.target.value as "WAITING" | "COMPLETE",
+                  })
+                }
+              >
+                <option value="WAITING">WAITING</option>
+                <option value="COMPLETE">COMPLETE</option>
+              </select>
+              <button
+                disabled={savingPostId === p.id}
+                onClick={() => updateStatus(p.id, p.status)}
+              >
+                {savingPostId === p.id ? "Saving" : "Save"}
+              </button>
+              <h1>สถานะปัจจุบัน : {p.status}</h1>
             </div>
           ))}
         </div>

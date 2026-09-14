@@ -18,7 +18,6 @@ model User {
   password String
   queueId Int?
   post Post[]
-  author Queue? @relation(fields: [queueId],references: [id]) 
 }
 model Admin {
   id Int @id @default(autoincrement())
@@ -27,25 +26,32 @@ model Admin {
   password String
   role String
 }
-model Queue {
-  id Int @id @default(autoincrement())
-  status queueStatus @default(WAITING)
-  updateAt DateTime @updatedAt
-  user User[]  
-  post Post[]
-}
-
 model Post {
   id Int @id @default(autoincrement())
-  name String
+  item PostMenu[]
   details String?
+  updateAt DateTime @updatedAt
   createdAt DateTime @default(now())
-  queueId Int 
+  status queueStatus @default(WAITING)
   userId Int
-  queue Queue @relation(fields: [queueId],references: [id])
-  user User? @relation(fields: [userId],references: [id])
+  user User @relation(fields: [userId],references: [id])
 }
 
+model Menu {
+  id Int @id @default(autoincrement())
+  name String @unique
+  price Decimal @db.Decimal(10,2)
+  post PostMenu[]
+}
+
+model PostMenu {
+  postId Int
+  menuId Int
+  quantity Int @default(1)
+  post Post @relation(fields: [postId], references: [id],onDelete:Cascade )
+  menu Menu @relation(fields: [menuId], references: [id])
+  @@id([postId,menuId])
+}
 enum queueStatus {
   WAITING
   COMPLETE

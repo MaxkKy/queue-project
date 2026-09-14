@@ -28,30 +28,21 @@ export async function GET(request:NextRequest) {
     post:{
         select:{
             id:true,
-            name:true,
             details:true,
             createdAt:true,
-            queue:{select:{
-                id:true,
-                status:true,
-                updateAt:true
-            }}
+            status:true,
+            item:{
+              select:{quantity:true,menu:{select:{name:true,price:true}}}
+            }
         }
     }
    }});
     return NextResponse.json(checkResult);
-  } catch {
+  } catch(err) {
+    console.log(err)
     return NextResponse.json(
       { message: "Server not Found", code: "SERVER_ERROR", statusCode: 500 },
       { status: 500 },
     );
-  }
-}
-export async function POST(request:NextRequest) {
-  try{
-
-  }
-  catch{
-
   }
 }

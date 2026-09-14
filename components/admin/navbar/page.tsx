@@ -12,7 +12,7 @@ export default function Navbar() {
   async function onLogOut() {
     try {
       await apiClient.post(`/logout`);
-      router.push(`/login`)
+      router.push(`/admin/login`)
     } catch (err) {
       handleError(err);
     }
@@ -56,10 +56,10 @@ export default function Navbar() {
           </li>
           <li>
             <Link
-              href="/dashboard/post"
+              href="/admin/menu"
               className="relative px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-foreground after:absolute after:inset-x-3 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-primary after:transition-transform hover:after:scale-x-100"
             >
-              สั่งอาหาร
+              เพิ่งรายการอาหาร
             </Link>
           </li>
           <li>

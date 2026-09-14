@@ -14,7 +14,8 @@ export async function GET(request:NextRequest){
         if(!checkAdmin[0]){
             return NextResponse.json({message:"Gmail not Found", code:'NOT_FOUND' ,statusCode:404},{status:404})
         }
-        return NextResponse.json(checkAdmin[0]) 
+        const admin = await prisma.admin.findMany({select:{username:true,gmail:true}})
+        return NextResponse.json(admin) 
     }
     catch(err){
         return NextResponse.json({message:"Server not Found", code:'SERVER_ERROR', statusCode:500},{status:500})
