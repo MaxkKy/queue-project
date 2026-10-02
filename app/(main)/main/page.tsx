@@ -1,12 +1,9 @@
 "use client";
 
-import { AppError } from "@/lib/errors/AppError";
 import { useApiError } from "@/hooks/useApiError";
 import { apiClient } from "@/services/api/apiClient";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import e from "express";
-import { includes } from "zod";
+
 type postType = {
   id: number;
   details: string;
